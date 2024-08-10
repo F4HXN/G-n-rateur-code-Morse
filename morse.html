@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="author" content="F4HXN">
+    <meta name="description" content="Traducteur de Code Morse">
+    <meta name="copyright" content="Libre de droits">
+    <title>Traducteur de Code Morse</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  .container {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    width: 100%;
+  }
+  h1 {
+    color: #333;
+    text-align: center;
+  }
+  textarea {
+    width: 100%;
+    height: 100px;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  #output {
+    font-family: monospace;
+    font-size: 1.2rem;
+    background-color: #eee;
+    padding: 1rem;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin-bottom: 1rem;
+  }
+  button {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  #stopButton {
+    background-color: #f44336;
+  }
+  .control {
+    margin-top: 1rem;
+  }
+  .control label {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+  .control input {
+    width: 100%;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Générateur de code Morse</h1>
+    <textarea id="input" placeholder="Entrer le texte à convertir en code Morse"></textarea>
+    <div id="output"></div>
+    <button id="playButton">Lecture Code Morse</button>
+    <button id="stopButton">Stop</button>
+    <div class="control">
+      <label for="volumeControl">Volume</label>
+      <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="0.5">
+    </div>
+    <div class="control">
+      <label for="speedControl">Vitesse (WPM)</label>
+      <input type="range" id="speedControl" min="5" max="50" step="1" value="20">
+      <span id="speedValue">20 WPM</span>
+    </div>
+  </div>
+
+  <script>
+    const morseCode = {
+      'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+      'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+      'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+      'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+      'Y': '-.--', 'Z': '--..', '0': '-----', '1': '.----', '2': '..---',
+      '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...',
+      '8': '---..', '9': '----.', '.': '.-.-.-', ',': '--..--', '?': '..--..',
+      "'": '.----.', '!': '-.-.--', '/': '-..-.', '(': '-.--.', ')': '-.--.-',
+      '&': '.-...', ':': '---...', ';': '-.-.-.', '=': '-...-', '+': '.-.-.',
+      '-': '-....-', '_': '..--.-', '"': '.-..-.', '$': '...-..-', '@': '.--.-.',
+      ' ': ' '
+    };
+
+    function textToMorse(text) {
+      return text.toUpperCase().split('').map(char => morseCode[char] || char).join(' ');
+    }
+
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+    const playButton = document.getElementById('playButton');
+    const stopButton = document.getElementById('stopButton');
+    const volumeControl = document.getElementById('volumeControl');
+    const speedControl = document.getElementById('speedControl');
+    const speedValue = document.getElementById('speedValue');
+
+    input.addEventListener('input', () => {
+      const text = input.value;
+      const morse = textToMorse(text);
+      output.textContent = morse;
+    });
+
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const gainNode = audioContext.createGain();
+    gainNode.connect(audioContext.destination);
+
+    volumeControl.addEventListener('input', () => {
+      gainNode.gain.setValueAtTime(volumeControl.value, audioContext.currentTime);
+    });
+
+    speedControl.addEventListener('input', () => {
+      speedValue.textContent = `${speedControl.value} WPM`;
+    });
+
+    let isPlaying = false;
+    let stopPlayback = false;
+
+    function playMorseCode(morse) {
+      if (isPlaying) return;
+      isPlaying = true;
+      stopPlayback = false;
+
+      const wpm = parseInt(speedControl.value);
+      const dotDuration = 1.2 / wpm;
+      const dashDuration = dotDuration * 3;
+      const pauseDuration = dotDuration;
+      const frequency = 700;
+
+      let startTime = audioContext.currentTime;
+
+      function scheduleNextTone(index) {
+        if (index >= morse.length || stopPlayback) {
+          isPlaying = false;
+          return;
+        }
+
+        const char = morse[index];
+        if (char === '.') {
+          playTone(frequency, startTime, dotDuration);
+          startTime += dotDuration + pauseDuration;
+        } else if (char === '-') {
+          playTone(frequency, startTime, dashDuration);
+          startTime += dashDuration + pauseDuration;
+        } else if (char === ' ') {
+          startTime += 3 * pauseDuration;
+        }
+
+        setTimeout(() => scheduleNextTone(index + 1), (startTime - audioContext.currentTime) * 1000);
+      }
+
+      scheduleNextTone(0);
+    }
+
+    function playTone(frequency, startTime, duration) {
+      const oscillator = audioContext.createOscillator();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(frequency, startTime);
+
+      oscillator.connect(gainNode);
+      oscillator.start(startTime);
+      oscillator.stop(startTime + duration);
+    }
+
+    playButton.addEventListener('click', () => {
+      const text = input.value;
+      const morse = textToMorse(text);
+      playMorseCode(morse);
+    });
+
+    stopButton.addEventListener('click', () => {
+      stopPlayback = true;
+    });
+
+    // Initialize the display
+    input.dispatchEvent(new Event('input'));
+  </script>
+</body>
+</html>
