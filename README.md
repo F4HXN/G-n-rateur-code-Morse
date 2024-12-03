@@ -39,10 +39,6 @@ git clone https://github.com/votre-username/morse-generator.git
 ```
 morse-generator/
 ├── index.html
-├── css/
-│   └── style.css
-├── js/
-│   └── morse.js
 └── README.md
 ```
 
