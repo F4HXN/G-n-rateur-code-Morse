@@ -39,6 +39,7 @@ git clone https://github.com/votre-username/morse-generator.git
 ```
 morse-generator/
 ├── morse.html
+ ──LICENSE
 └── README.md
 ```
 
