@@ -25,7 +25,7 @@ Cette application web permet de :
 git clone https://github.com/votre-username/morse-generator.git
 ```
 
-2. Ouvrez `index.html` dans votre navigateur
+2. Ouvrez `morse.html` dans votre navigateur
 
 ## 🛠️ Technologies Utilisées
 
