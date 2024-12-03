@@ -22,7 +22,7 @@ Cette application web permet de :
 
 1. Clonez ce dépôt :
 ```bash
-git clone https://github.com/votre-username/morse-generator.git
+git clone https://github.com/F4HXN/morse-generator.git
 ```
 
 2. Ouvrez `morse.html` dans votre navigateur
